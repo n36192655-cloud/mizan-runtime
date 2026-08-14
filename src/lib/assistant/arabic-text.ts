@@ -37,7 +37,9 @@ export function ar(text: string | number | null | undefined): string {
     .map((line) => {
       const shaped = ArabicShaper.convertArabic(line);
       const levels = bidi.getEmbeddingLevels(shaped, "rtl");
-      return bidi.getReorderedString(shaped, levels);
+      const reordered = bidi.getReorderedString(shaped, levels);
+      // jsPDF renders characters LTR, so flip to visual order for RTL display
+      return reordered.split("").reverse().join("");
     })
     .join("\n");
 }
