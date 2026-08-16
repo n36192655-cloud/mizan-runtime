@@ -7,7 +7,7 @@ import { CAIRO_REGULAR_BASE64 } from "./cairo-font";
  * Arabic support helpers for jsPDF:
  *  - embeds the Cairo font (Arabic glyphs) into the jsPDF VFS
  *  - reshapes Arabic letters into their connected presentation forms
- *  - reorders text visually (RTL) since jsPDF renders runs left-to-right
+ *  - reorders text into final visual order (RTL) while preserving LTR runs
  */
 
 const bidi = bidiFactory();
@@ -28,6 +28,8 @@ const ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFEFF]/;
 /**
  * Prepares a string for rendering with jsPDF.
  * Arabic strings are reshaped then reordered to visual order; other text passes through.
+ * Do not reverse the result: bidi-js already produces visual order, and another
+ * reversal corrupts Arabic direction plus English, numbers, dates, and amounts.
  */
 export function ar(text: string | number | null | undefined): string {
   const raw = text === null || text === undefined ? "" : String(text);
@@ -37,9 +39,7 @@ export function ar(text: string | number | null | undefined): string {
     .map((line) => {
       const shaped = ArabicShaper.convertArabic(line);
       const levels = bidi.getEmbeddingLevels(shaped, "rtl");
-      const reordered = bidi.getReorderedString(shaped, levels);
-      // jsPDF renders characters LTR, so flip to visual order for RTL display
-      return reordered.split("").reverse().join("");
+      return bidi.getReorderedString(shaped, levels);
     })
     .join("\n");
 }
