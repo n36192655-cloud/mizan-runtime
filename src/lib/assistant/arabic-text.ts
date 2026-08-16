@@ -15,7 +15,7 @@ export function registerArabicFont(doc: jsPDF): void {
   doc.addFont("Cairo-Regular.ttf", AR_FONT, "normal");
   doc.addFont("Cairo-Regular.ttf", AR_FONT, "bold");
   doc.setFont(AR_FONT, "normal");
-  doc.setR2L(false); // we handle ordering ourselves, per string
+  doc.setR2L(true);
 }
 
 /**
