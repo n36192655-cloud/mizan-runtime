@@ -1,16 +1,11 @@
 import type { jsPDF } from "jspdf";
-import bidiFactory from "bidi-js";
-import { ArabicShaper } from "arabic-persian-reshaper";
 import { CAIRO_REGULAR_BASE64 } from "./cairo-font";
 
 /**
  * Arabic support helpers for jsPDF:
  *  - embeds the Cairo font (Arabic glyphs) into the jsPDF VFS
- *  - reshapes Arabic letters into their connected presentation forms
- *  - reorders text into final visual order (RTL) while preserving LTR runs
+ *  - leaves text in logical Unicode order for jsPDF's built-in Arabic parser
  */
-
-const bidi = bidiFactory();
 
 export const AR_FONT = "Cairo";
 
@@ -23,23 +18,11 @@ export function registerArabicFont(doc: jsPDF): void {
   doc.setR2L(false); // we handle ordering ourselves, per string
 }
 
-const ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFEFF]/;
-
 /**
  * Prepares a string for rendering with jsPDF.
- * Arabic strings are reshaped then reordered to visual order; other text passes through.
- * Do not reverse the result: bidi-js already produces visual order, and another
- * reversal corrupts Arabic direction plus English, numbers, dates, and amounts.
+ * jsPDF 4 runs its Arabic parser before writing text, so pre-shaping or applying
+ * BiDi here would process Arabic twice and reverse mixed English/numeric runs.
  */
 export function ar(text: string | number | null | undefined): string {
-  const raw = text === null || text === undefined ? "" : String(text);
-  if (!raw || !ARABIC_RE.test(raw)) return raw;
-  return raw
-    .split("\n")
-    .map((line) => {
-      const shaped = ArabicShaper.convertArabic(line);
-      const levels = bidi.getEmbeddingLevels(shaped, "rtl");
-      return bidi.getReorderedString(shaped, levels);
-    })
-    .join("\n");
+  return text === null || text === undefined ? "" : String(text);
 }
