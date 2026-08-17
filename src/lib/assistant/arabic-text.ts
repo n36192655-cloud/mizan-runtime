@@ -15,13 +15,13 @@ export function registerArabicFont(doc: jsPDF): void {
   doc.addFont("Cairo-Regular.ttf", AR_FONT, "normal");
   doc.addFont("Cairo-Regular.ttf", AR_FONT, "bold");
   doc.setFont(AR_FONT, "normal");
-  doc.setR2L(true);
+  doc.setR2L(false);
 }
 
 /**
  * Prepares a string for rendering with jsPDF.
- * jsPDF 4 runs its Arabic parser before writing text, so pre-shaping or applying
- * BiDi here would process Arabic twice and reverse mixed English/numeric runs.
+ * jsPDF shapes logical Arabic internally. Keeping global R2L disabled avoids a
+ * second BiDi pass that reverses Arabic while preserving Latin and numeric runs.
  */
 export function ar(text: string | number | null | undefined): string {
   return text === null || text === undefined ? "" : String(text);
