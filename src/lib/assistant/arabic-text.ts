@@ -1,15 +1,11 @@
 import type { jsPDF } from "jspdf";
-import bidiFactory from "bidi-js";
-import { ArabicShaper } from "arabic-persian-reshaper";
 import { CAIRO_REGULAR_BASE64 } from "./cairo-font";
 
 /**
  * Arabic support helpers for jsPDF:
  *  - embeds the Cairo font (Arabic glyphs) into the jsPDF VFS
- *  - shapes Arabic once and applies Unicode BiDi before jsPDF writes the glyphs
+ *  - leaves text in logical Unicode order for jsPDF's built-in Arabic parser
  */
-
-const bidi = bidiFactory();
 
 export const AR_FONT = "Cairo";
 
@@ -22,22 +18,11 @@ export function registerArabicFont(doc: jsPDF): void {
   doc.setR2L(false);
 }
 
-const ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFEFF]/;
-
 /**
  * Prepares a string for rendering with jsPDF.
- * The shaper converts only base Arabic letters; jsPDF's later Arabic hook leaves
- * those presentation forms unchanged. BiDi preserves English and numeric runs.
+ * jsPDF shapes logical Arabic internally. Keeping global R2L disabled avoids a
+ * second BiDi pass that reverses Arabic while preserving Latin and numeric runs.
  */
 export function ar(text: string | number | null | undefined): string {
-  const raw = text === null || text === undefined ? "" : String(text);
-  if (!raw || !ARABIC_RE.test(raw)) return raw;
-  return raw
-    .split("\n")
-    .map((line) => {
-      const shaped = ArabicShaper.convertArabic(line);
-      const levels = bidi.getEmbeddingLevels(shaped, "rtl");
-      return bidi.getReorderedString(shaped, levels);
-    })
-    .join("\n");
+  return text === null || text === undefined ? "" : String(text);
 }
